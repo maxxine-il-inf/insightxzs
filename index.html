@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image + MP3 Player</title>
+
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #0b0b10;
+      color: #eef0ff;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    .wrap {
+      width: min(980px, 100%);
+      display: grid;
+      gap: 14px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      opacity: 0.95;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      letter-spacing: 0.3px;
+    }
+
+    .card {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+    }
+
+    .media {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 0;
+    }
+
+    /* responsive: stack on small screens */
+    @media (max-width: 780px) {
+      .media { grid-template-columns: 1fr; }
+    }
+
+    .imgPane {
+      position: relative;
+      min-height: 240px;
+      background: #111;
+    }
+    .imgPane img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      aspect-ratio: 16 / 10;
+    }
+    .imgLabel {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px);
+    }
+
+    .playerPane {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .titleRow {
+      display: grid;
+      gap: 4px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(18px, 2.3vw, 24px);
+      font-weight: 650;
+      letter-spacing: 0.2px;
+    }
+    .sub {
+      margin: 0;
+      opacity: 0.75;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.25);
+    }
+
+    .btnRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.08);
+      color: #eef0ff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.06s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    button:active { transform: scale(0.98); }
+    button:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
+    button.secondary { opacity: 0.95; }
+
+    .timeRow {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #eef0ff;
+      cursor: pointer;
+    }
+
+    .fineRow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      opacity: 0.9;
+      font-size: 12px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    footer {
+      opacity: 0.7;
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 10px 2px 0;
+    }
+    code {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    a { color: #cfd3ff; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="tag">Device-responsive • Single image • Single MP3</div>
+      <div class="tag" id="statusTag">Status: Ready</div>
+    </header>
+
+    <section class="card">
+      <div class="media">
+        <div class="imgPane">
+          <!-- Put your image file in the same folder as this HTML -->
+          <img id="heroImg" src="image.jpg" alt="Hero image" />
+          <div class="imgLabel">image.jpg</div>
+        </div>
+
+        <div class="playerPane">
+          <div class="titleRow">
+            <h1 id="trackTitle">My One Song</h1>
+            <p class="sub">
+              Drop your files next to <code>index.html</code> in Kodex:
+              <code>image.jpg</code> and <code>song.mp3</code>.
+            </p>
+          </div>
+
+          <!-- Audio element (hidden UI, controlled by JS) -->
+          <audio id="audio" preload="metadata">
+            <source src="song.mp3" type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+
+          <div class="controls">
+            <div class="btnRow">
+              <button id="playBtn">Play</button>
+              <button id="rewBtn" class="secondary">-10s</button>
+              <button id="fwdBtn" class="secondary">+10s</button>
+            </div>
+
+            <div class="timeRow">
+              <span id="curTime">0:00</span>
+              <span id="durTime">0:00</span>
+            </div>
+
+            <input id="seek" type="range" min="0" max="1000" value="0" step="1" />
+
+            <div class="fineRow">
+              <span class="pill">Volume
+                <input id="vol" type="range" min="0" max="1" value="0.9" step="0.01" />
+              </span>
+
+              <span class="pill" id="ratePill">Speed: 1.00×</span>
+              <button id="speedBtn" class="secondary">Change speed</button>
+            </div>
+          </div>
+
+          <footer>
+            Tip: If your preview shows a broken image or silent audio, make sure the filenames match exactly:
+            <code>image.jpg</code> and <code>song.mp3</code>.
+          </footer>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const audio = document.getElementById("audio");
+    const playBtn = document.getElementById("playBtn");
+    const rewBtn = document.getElementById("rewBtn");
+    const fwdBtn = document.getElementById("fwdBtn");
+    const seek = document.getElementById("seek");
+    const vol = document.getElementById("vol");
+    const curTime = document.getElementById("curTime");
+    const durTime = document.getElementById("durTime");
+    const statusTag = document.getElementById("statusTag");
+    const speedBtn = document.getElementById("speedBtn");
+    const ratePill = document.getElementById("ratePill");
+
+    // Helpers
+    function fmtTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return `${m}:${String(s).padStart(2, "0")}`;
+    }
+
+    function setStatus(text) {
+      statusTag.textContent = `Status: ${text}`;
+    }
+
+    // Audio setup
+    audio.volume = parseFloat(vol.value);
+
+    audio.addEventListener("loadedmetadata", () => {
+      durTime.textContent = fmtTime(audio.duration);
+      setStatus("Loaded");
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      curTime.textContent = fmtTime(audio.currentTime);
+      if (audio.duration) {
+        const v = Math.floor((audio.currentTime / audio.duration) * 1000);
+        if (!seek.matches(":active")) seek.value = String(v);
+      }
+    });
+
+    audio.addEventListener("play", () => {
+      playBtn.textContent = "Pause";
+      setStatus("Playing");
+    });
+
+    audio.addEventListener("pause", () => {
+      playBtn.textContent = "Play";
+      setStatus("Paused");
+    });
+
+    audio.addEventListener("ended", () => {
+      playBtn.textContent = "Play";
+      setStatus("Ended");
+    });
+
+    audio.addEventListener("error", () => {
+      setStatus("Audio file not found (check song.mp3)");
+    });
+
+    // Controls
+    playBtn.addEventListener("click", async () => {
+      try {
+        if (audio.paused) {
+          await audio.play();
+        } else {
+          audio.pause();
+        }
+      } catch (e) {
+        setStatus("Tap Play again (autoplay blocked)");
+      }
+    });
+
+    rewBtn.addEventListener("click", () => {
+      audio.currentTime = Math.max(0, audio.currentTime - 10);
+    });
+
+    fwdBtn.addEventListener("click", () => {
+      audio.currentTime = Math.min(audio.duration || audio.currentTime + 10, audio.currentTime + 10);
+    });
+
+    seek.addEventListener("input", () => {
+      if (!audio.duration) return;
+      const target = (parseInt(seek.value, 10) / 1000) * audio.duration;
+      audio.currentTime = target;
+    });
+
+    vol.addEventListener("input", () => {
+      audio.volume = parseFloat(vol.value);
+    });
+
+    // Speed cycling
+    const speeds = [0.75, 1.0, 1.25, 1.5];
+    function updateRateUI() {
+      ratePill.textContent = `Speed: ${audio.playbackRate.toFixed(2)}×`;
+    }
+    updateRateUI();
+
+    speedBtn.addEventListener("click", () => {
+      const cur = audio.playbackRate;
+      const idx = speeds.indexOf(cur);
+      audio.playbackRate = speeds[(idx + 1) % speeds.length];
+      updateRateUI();
+    });
+
+    // Small sanity check for the image path
+    const heroImg = document.getElementById("heroImg");
+    heroImg.addEventListener("error", () => {
+      setStatus("Image file not found (check image.jpg)");
+    });
+  </script>
+</body>
+	</html>
